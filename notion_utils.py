@@ -56,3 +56,32 @@ def create_invoice_page(client: str, interventions: list, total: float, invoice_
     response = requests.post("https://api.notion.com/v1/pages", headers=HEADERS, json=payload)
     response.raise_for_status()
     return response.json()
+
+
+from config import DB_INTERVENTIONS_ID
+
+def query_unbilled_entries(date_begin: str, date_end: str, a_ete_facture: bool):
+    date_filter = [
+        {"property": "Date de début", "date": {"on_or_after": date_begin}},
+        {"property": "Date de début", "date": {"before": date_end}}
+    ]
+
+    if a_ete_facture is not None:
+        date_filter.append({
+            "property": "Facturé",
+            "checkbox": {"equals": a_ete_facture}
+        })
+
+    query = {
+        "filter": {
+            "and": date_filter
+        }
+    }
+
+    response = requests.post(
+        f"https://api.notion.com/v1/databases/{DB_INTERVENTIONS_ID}/query",
+        headers=HEADERS,
+        json=query
+    )
+    response.raise_for_status()
+    return response.json()["results"]
